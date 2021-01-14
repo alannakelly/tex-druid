@@ -8,8 +8,8 @@ use crate::palette::Palette;
 
 pub struct MipTexture {
     name: [u8; 16],
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
     offset1: u32,
     offset2: u32,
     offset4: u32,
@@ -63,21 +63,22 @@ impl MipTexture {
         return t;
     }
 
-    pub fn to_rgba_image(&self, pal: &Palette) -> Vec<u8> {
+    pub fn to_rgb_image(&self, pal: &Palette) -> Vec<u8> {
         let mut image = vec![0u8; self.image1.len() * 3];
         let mut i = 0;
         for p in self.image1.iter() {
             let rgb = pal.get_rgb(*p);
             image[i] = rgb.r;
-            image[i + 2] = rgb.g;
-            image[i + 3] = rgb.b;
+            image[i + 1] = rgb.g;
+            image[i + 2] = rgb.b;
             i += 3;
         }
         return image;
     }
 
     pub fn name(&self) -> &str {
-        str::from_utf8(&self.name).unwrap()
+        let name = str::from_utf8(&self.name).unwrap();
+        return name.trim_matches(char::from(0));
     }
 }
 

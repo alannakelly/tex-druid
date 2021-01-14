@@ -1,10 +1,10 @@
 mod palette;
-mod wad;
+mod wad2;
 mod miptexture;
 
 use std::fmt;
 use std::fmt::Formatter;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::io::{SeekFrom, BufWriter};
 use std::str;
@@ -12,9 +12,9 @@ use byteorder::{NativeEndian, ReadBytesExt};
 use std::default;
 use png::{ColorType, BitDepth};
 use palette::Palette;
-use wad::EntryType;
-use wad::WadHeader;
-use wad::WadEntry;
+use wad2::EntryType;
+use wad2::WadHeader;
+use wad2::WadEntry;
 use miptexture::MipTexture;
 
 /*typedef struct                 // Mip texture list header
@@ -48,7 +48,7 @@ fn write_png(file_path:&str, width:u32, height:u32, data:&[u8]) {
 
 fn main() {
     //let mut wad_file = fs::read("q.wad").expect("Unable to read file.");
-    let mut pal;
+    let mut pal = Palette::default();
     let mut file = File::open("q.wad").expect("unable to read fiel");
     let header = WadHeader::read(&file);
     assert_eq!(header.magic, 0x32444157);
@@ -68,9 +68,10 @@ fn main() {
         } else if entry.entry_type == (EntryType::MipTexture as u8) {
             //println!("Texture {} found at {}.", str::from_utf8(&entry.name).unwrap(), entry.offset);
             let tex = MipTexture::read(&file, entry.offset as u64);
-            //println!("{}",tex);
+            println!("{}",tex);
 
-            write_png(format!("{}.png",miptexture.name()).as_str(), miptexture.to_rgb_image(pal?));
+            //write_png(&*format!("{}.png", tex.name()), tex.width, tex.height, &*tex.to_rgb_image(&pal));
+
         }
     }
 

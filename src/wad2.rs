@@ -1,10 +1,11 @@
-use std::fmt;
+use std::{fmt, fs};
 use std::fmt::Formatter;
 use std::fs::File;
 use std::io::Read;
 use std::str;
 
 use byteorder::{NativeEndian, ReadBytesExt};
+use std::path::Path;
 
 pub enum EntryType {
     Palette = 0x40,
@@ -13,31 +14,43 @@ pub enum EntryType {
     ConsoleImage = 0x45
 }
 
-pub struct WadHeader {
-    pub magic: u32,
-    pub numentries: u32,
-    pub diroffset: u32
+struct WadFile {
+    data: Box<u8>
 }
 
-impl WadHeader {
-    pub fn read(mut file: &File) -> WadHeader {
-        WadHeader {
-            magic: file.read_u32::<NativeEndian>().unwrap(),
-            numentries: file.read_u32::<NativeEndian>().unwrap(),
-            diroffset: file.read_u32::<NativeEndian>().unwrap()
-        }
+impl WadFile {
+    pub fn load(path: &ath) -> WadFile {
+        let size_in_bytes = fs::metadata(path)?.len();
+        let file = File::open(path);
+        file.seek(Seek::Start(0));
+
     }
 }
 
-pub struct WadEntry {
-    pub offset: u32,
-    dsize: u32,
-    size: u32,
-    pub entry_type: u8,
-    compression: u8,
-    dummy: u16,
-    name: [u8; 16]
+#[derive(Clone, Copy, View)]
+#[repr(C)]
+pub struct WadHeader {
+    pub magic: i32,
+    pub numentries: i32,
+    pub diroffset: i32
 }
+
+#[derive(Clone, Copy, View)]
+#[repr(C)]
+pub struct WadEntry {
+    offset: i32,
+    dsize: i32,
+    size: i32,
+    entry_type: i8,
+    compression: i8,
+    dummy: i16,
+    name: [i8; 16]
+}
+
+
+
+
+
 
 impl WadEntry {
     pub fn read(mut file: &File) -> WadEntry {

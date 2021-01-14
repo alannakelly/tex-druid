@@ -6,10 +6,10 @@ use std::io::{Seek, SeekFrom};
 use byteorder::ReadBytesExt;
 
 #[derive(Debug, Clone, Copy)]
-struct RGB {
-    r: u8,
-    g: u8,
-    b: u8,
+pub struct RGB {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 impl Default for RGB {
@@ -46,6 +46,10 @@ impl Palette {
         }
         file.seek(SeekFrom::Start(save_offset)).unwrap();
         return pal;
+    }
+
+    pub fn get_rgb(&self, index: u8) -> RGB {
+        return self.entries[index as usize];
     }
 
     pub fn to_image(&self) -> [u8; 768] {

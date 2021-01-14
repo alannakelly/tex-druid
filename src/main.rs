@@ -48,6 +48,7 @@ fn write_png(file_path:&str, width:u32, height:u32, data:&[u8]) {
 
 fn main() {
     //let mut wad_file = fs::read("q.wad").expect("Unable to read file.");
+    let mut pal;
     let mut file = File::open("q.wad").expect("unable to read fiel");
     let header = WadHeader::read(&file);
     assert_eq!(header.magic, 0x32444157);
@@ -59,7 +60,7 @@ fn main() {
         let entry = WadEntry::read(&file);
         if entry.entry_type == (EntryType::Palette as u8) {
             // print!("Palette found at {}.", entry.offset);
-            let pal = Palette::read(&file, entry.offset as u64);
+            pal = Palette::read(&file, entry.offset as u64);
             write_png(r"pal.png",16,16,&pal.to_image());
             // for e in pal.entries {
             //     println!("{}",e);
@@ -67,7 +68,9 @@ fn main() {
         } else if entry.entry_type == (EntryType::MipTexture as u8) {
             //println!("Texture {} found at {}.", str::from_utf8(&entry.name).unwrap(), entry.offset);
             let tex = MipTexture::read(&file, entry.offset as u64);
-            println!("{}",tex);
+            //println!("{}",tex);
+
+            write_png(format!("{}.png",miptexture.name()).as_str(), miptexture.to_rgb_image(pal?));
         }
     }
 

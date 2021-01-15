@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 byteorder = "1.4.2"
 png = "0.16.8"
+structview = "1.1.0"

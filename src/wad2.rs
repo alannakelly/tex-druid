@@ -1,11 +1,11 @@
 use std::{fmt, fs};
-use std::fmt::Formatter;
+use std::fmt::{Formatter, Error};
 use std::fs::File;
 use std::io::Read;
-use std::str;
-
-use byteorder::{NativeEndian, ReadBytesExt};
 use std::path::Path;
+use std::str;
+use byteorder::{NativeEndian, ReadBytesExt};
+use structview::{View, i32_le, i16_le};
 
 pub enum EntryType {
     Palette = 0x40,
@@ -14,68 +14,63 @@ pub enum EntryType {
     ConsoleImage = 0x45
 }
 
-struct WadFile {
-    data: Box<u8>
+pub struct WadFile {
+    data: Vec<u8>
 }
 
 impl WadFile {
-    pub fn load(path: &ath) -> WadFile {
-        let size_in_bytes = fs::metadata(path)?.len();
-        let file = File::open(path);
-        file.seek(Seek::Start(0));
-
+    pub fn load(path: &Path) -> Result<(), structview::Error> {
+        let size_in_bytes = fs::metadata(path).unwrap().len();
+        println!("data length {}.", size_in_bytes);
+        let mut file = File::open(path).unwrap();
+        let mut wad = WadFile {
+            data: Vec::with_capacity(size_in_bytes as usize)
+        };
+        file.read_to_end(&mut wad.data);
+        println!("data length {}.", wad.data.len());
+        let header = WadHeader::view(&wad.data)?;
+        println!("directory offset {}.", header.diroffset);
+        let mut offset = header.diroffset.to_int() as usize;
+        while offset < wad.data.len() {
+            let entry:&WadEntry = WadEntry::view(&wad.data[offset..])?;
+            println!("{}", entry);
+            offset += std::mem::size_of::<WadEntry>();
+        }
+        Ok(())
     }
 }
 
 #[derive(Clone, Copy, View)]
 #[repr(C)]
 pub struct WadHeader {
-    pub magic: i32,
-    pub numentries: i32,
-    pub diroffset: i32
+    magic: i32_le,
+    numentries: i32_le,
+    diroffset: i32_le
 }
 
 #[derive(Clone, Copy, View)]
 #[repr(C)]
 pub struct WadEntry {
-    offset: i32,
-    dsize: i32,
-    size: i32,
+    offset: i32_le,
+    dsize: i32_le,
+    size: i32_le,
     entry_type: i8,
     compression: i8,
-    dummy: i16,
-    name: [i8; 16]
+    dummy: i16_le,
+    name: [u8; 16]
 }
 
-
-
-
-
-
-impl WadEntry {
-    pub fn read(mut file: &File) -> WadEntry {
-        let mut entry = WadEntry {
-            offset: file.read_u32::<NativeEndian>().unwrap(),
-            dsize: file.read_u32::<NativeEndian>().unwrap(),
-            size: file.read_u32::<NativeEndian>().unwrap(),
-            entry_type: file.read_u8().unwrap(),
-            compression: file.read_u8().unwrap(),
-            dummy: file.read_u16::<NativeEndian>().unwrap(),
-            name: [0; 16]
-        };
-
-        let mut entry_name:[u8;16] = [0;16];
-        file.read_exact(&mut entry_name).expect("Error reading entry name.");
-        for i in 0..(entry_name.iter().position(|&c| c == 0)).unwrap() {
-            entry.name[i] = entry_name[i];
-        }
-
-        return entry;
+fn fix_bad_entry_name(bad:&[u8; 16]) -> Vec<u8> {
+    let mut good= Vec::with_capacity(16);
+    for c in bad.iter() {
+        if *c == 0 { break; }
+        good.push(*c);
     }
+    return good;
 }
 
 impl fmt::Display for WadEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f,"{}", str::from_utf8(&self.name).unwrap())
+        write!(f,"{}", str::from_utf8(&*fix_bad_entry_name(&self.name)).unwrap())
     }
 }

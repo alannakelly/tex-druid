@@ -16,6 +16,7 @@ use wad2::EntryType;
 use wad2::WadHeader;
 use wad2::WadEntry;
 use miptexture::MipTexture;
+use std::path::Path;
 
 /*typedef struct                 // Mip texture list header
 { long numtex;                 // Number of textures in Mip Texture list
@@ -47,8 +48,9 @@ fn write_png(file_path:&str, width:u32, height:u32, data:&[u8]) {
 }
 
 fn main() {
+    wad2::WadFile::load(Path::new("q.wad"));
     //let mut wad_file = fs::read("q.wad").expect("Unable to read file.");
-    let mut pal = Palette::default();
+    /*let mut pal = Palette::default();
     let mut file = File::open("q.wad").expect("unable to read fiel");
     let header = WadHeader::read(&file);
     assert_eq!(header.magic, 0x32444157);
@@ -73,6 +75,6 @@ fn main() {
             //write_png(&*format!("{}.png", tex.name()), tex.width, tex.height, &*tex.to_rgb_image(&pal));
 
         }
-    }
+    }*/
 
 }

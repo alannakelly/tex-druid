@@ -10,3 +10,4 @@ edition = "2018"
 png = "0.16.8"
 structview = "1.1.0"
 rgb = "0.8.25"
+druid = { git = "https://github.com/linebender/druid.git" }

@@ -14,7 +14,7 @@ use std::fmt::Formatter;
 use std::path::Path;
 use rgb::{RGB8, ComponentBytes};
 
-fn write_png(file_path: &String, width: u32, height: u32, data: &[u8]) {
+pub(crate) fn write_png(file_path: &String, width: u32, height: u32, data: &[u8]) {
     let path = std::path::Path::new(&file_path);
     let file = File::create(path).unwrap();
     let ref mut bufw = BufWriter::new(file);
@@ -32,6 +32,14 @@ pub fn get_entry_name(bad: &[u8; 16]) -> String {
         good.push(*c);
     }
     return String::from_utf8(good).unwrap();
+}
+
+pub fn indexed_to_rgb(image: &[u8], palette: &Palette) -> Vec::<RGB8> {
+    let mut rgb_image = Vec::<RGB8>::with_capacity(image.len());
+    for pixel in image {
+        rgb_image.push(palette.index(*pixel));
+    }
+    return rgb_image;
 }
 
 const ENTRY_PALETTE: i8 = 0x40;
@@ -83,8 +91,10 @@ impl fmt::Display for MipTexture {
     }
 }
 
+#[derive(Clone)]
 pub struct WadFile {
-    data: Vec<u8>
+    data: Vec<u8>,
+    num_entries: i32
 }
 
 impl WadFile {
@@ -117,6 +127,14 @@ impl WadFile {
             offset += mem::size_of::<WadEntry>();
         }
         return Ok(pal);
+    }
+
+    fn enumerate_entries(&self) {
+        let header = WadHeader::view(&self.data)?;
+        let mut offset = header.diroffset.to_int() as usize;
+        while offset < self.data.len() {
+            let entry: &WadEntry = WadEntry::view(&self.data[offset..])?;
+        }
     }
 
     pub fn dump_textures(&self, path: &Path) -> Result<(), structview::Error> {
@@ -157,5 +175,4 @@ impl WadFile {
         Ok(())
     }
 }
-
 

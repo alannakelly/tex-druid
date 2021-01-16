@@ -7,7 +7,7 @@ make a tool for making the workflow of creating maps with new custom textures in
 
 ## Usage
 
-tex-druid <filename>
+tex-druid filename
 
 ## Authors
 
